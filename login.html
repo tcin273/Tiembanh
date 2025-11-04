@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng Nhập - Cake Shop</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="login-container">
+        <div class="login-box">
+            <div class="login-header">
+                <h1>🎂 Cake Shop</h1>
+                <h2>Đăng Nhập</h2>
+            </div>
+
+            <form class="login-form" id="loginForm">
+                <div id="errorMessage" class="error-message" style="display: none;"></div>
+
+                <div class="form-group">
+                    <label for="username">Tên đăng nhập</label>
+                    <input type="text" id="username" name="username" placeholder="Nhập tên đăng nhập" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Mật khẩu</label>
+                    <input type="password" id="password" name="password" placeholder="Nhập mật khẩu" required>
+                </div>
+
+                <div class="form-options">
+                    <label class="remember-me">
+                        <input type="checkbox" id="remember">
+                        <span>Ghi nhớ đăng nhập</span>
+                    </label>
+                    <a href="#" class="forgot-password">Quên mật khẩu?</a>
+                </div>
+
+                <button type="submit" class="login-btn" id="loginBtn">Đăng Nhập</button>
+
+                <div class="signup-link">
+                    Chưa có tài khoản? <a href="register.html">Đăng ký ngay</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'https://banhngot.fitlhu.com';
+        const loginForm = document.getElementById('loginForm');
+        const loginBtn = document.getElementById('loginBtn');
+        const errorMessage = document.getElementById('errorMessage');
+
+        // Hàm hiển thị lỗi
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+            errorMessage.style.backgroundColor = '#fee';
+            errorMessage.style.color = '#c33';
+            errorMessage.style.padding = '10px';
+            errorMessage.style.borderRadius = '8px';
+            errorMessage.style.marginBottom = '15px';
+            errorMessage.style.fontSize = '0.9em';
+            errorMessage.style.textAlign = 'center';
+        }
+
+        // Hàm ẩn lỗi
+        function hideError() {
+            errorMessage.style.display = 'none';
+        }
+
+        // Hàm hiển thị loading
+        function setLoading(isLoading) {
+            if (isLoading) {
+                loginBtn.disabled = true;
+                loginBtn.textContent = 'Đang đăng nhập...';
+                loginBtn.style.opacity = '0.7';
+            } else {
+                loginBtn.disabled = false;
+                loginBtn.textContent = 'Đăng Nhập';
+                loginBtn.style.opacity = '1';
+            }
+        }
+
+        // Xử lý đăng nhập
+        loginForm.addEventListener('submit', async function (e) {
+            e.preventDefault();
+            hideError();
+
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            // Tạo request body
+            const requestBody = {
+                username: username,
+                password: password
+            };
+
+            try {
+                setLoading(true);
+
+                // Gọi API đăng nhập
+                const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Lưu thông tin user vào localStorage
+                    localStorage.setItem('user', JSON.stringify(data.data));
+                    localStorage.setItem('token', data.data.token);
+                    localStorage.setItem('userId', data.data.id);
+                    localStorage.setItem('username', data.data.username);
+
+                    // Redirect về trang chủ
+                    window.location.href = 'index.html';
+                } else {
+                    // Hiển thị lỗi từ API
+                    showError(data.message || 'Đăng nhập thất bại!');
+                }
+            } catch (error) {
+                console.error('Lỗi kết nối:', error);
+                showError('Không thể kết nối đến máy chủ. Vui lòng thử lại!');
+            } finally {
+                setLoading(false);
+            }
+        });
+
+        // Kiểm tra nếu đã đăng nhập
+        window.addEventListener('load', function () {
+            const token = localStorage.getItem('token');
+            if (token) {
+                // Đã đăng nhập, redirect về trang chủ
+                window.location.href = 'index.html';
+            }
+        });
+    </script>
+</body>
+
+</html>

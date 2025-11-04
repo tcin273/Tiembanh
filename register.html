@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng Ký - Cake Shop</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="login-container">
+        <div class="login-box">
+            <div class="login-header">
+                <h1>🎂 Cake Shop</h1>
+                <h2>Đăng Ký Tài Khoản</h2>
+            </div>
+
+            <form class="login-form" id="registerForm">
+                <div id="errorMessage" class="error-message" style="display: none;"></div>
+
+                <div class="form-group">
+                    <label for="fullname">Họ và tên</label>
+                    <input type="text" id="fullname" name="fullname" placeholder="Nhập họ và tên" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="username">Tên đăng nhập</label>
+                    <input type="text" id="username" name="username" placeholder="Nhập tên đăng nhập" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" placeholder="Nhập email của bạn" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="avatar">Avatar URL (tùy chọn)</label>
+                    <input type="url" id="avatar" name="avatar" placeholder="https://example.com/avatar.jpg">
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Mật khẩu</label>
+                    <input type="password" id="password" name="password" placeholder="Nhập mật khẩu" required
+                        minlength="6">
+                </div>
+
+                <div class="form-group">
+                    <label for="confirmPassword">Xác nhận mật khẩu</label>
+                    <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Nhập lại mật khẩu"
+                        required>
+                </div>
+
+                <button type="submit" class="login-btn" id="registerBtn">Đăng Ký</button>
+
+                <div class="signup-link">
+                    Đã có tài khoản? <a href="login.html">Đăng nhập ngay</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'https://banhngot.fitlhu.com';
+        const registerForm = document.getElementById('registerForm');
+        const registerBtn = document.getElementById('registerBtn');
+        const errorMessage = document.getElementById('errorMessage');
+
+        // Hàm hiển thị lỗi
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+            errorMessage.style.backgroundColor = '#fee';
+            errorMessage.style.color = '#c33';
+            errorMessage.style.padding = '10px';
+            errorMessage.style.borderRadius = '8px';
+            errorMessage.style.marginBottom = '15px';
+            errorMessage.style.fontSize = '0.9em';
+            errorMessage.style.textAlign = 'center';
+        }
+
+        // Hàm hiển thị thành công
+        function showSuccess(message) {
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+            errorMessage.style.backgroundColor = '#efe';
+            errorMessage.style.color = '#3c3';
+            errorMessage.style.padding = '10px';
+            errorMessage.style.borderRadius = '8px';
+            errorMessage.style.marginBottom = '15px';
+            errorMessage.style.fontSize = '0.9em';
+            errorMessage.style.textAlign = 'center';
+        }
+
+        // Hàm ẩn thông báo
+        function hideMessage() {
+            errorMessage.style.display = 'none';
+        }
+
+        // Hàm hiển thị loading
+        function setLoading(isLoading) {
+            if (isLoading) {
+                registerBtn.disabled = true;
+                registerBtn.textContent = 'Đang xử lý...';
+                registerBtn.style.opacity = '0.7';
+            } else {
+                registerBtn.disabled = false;
+                registerBtn.textContent = 'Đăng Ký';
+                registerBtn.style.opacity = '1';
+            }
+        }
+
+        // Xử lý đăng ký
+        registerForm.addEventListener('submit', async function (e) {
+            e.preventDefault();
+            hideMessage();
+
+            const fullname = document.getElementById('fullname').value;
+            const username = document.getElementById('username').value;
+            const email = document.getElementById('email').value;
+            const avatar = document.getElementById('avatar').value;
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            // Validate mật khẩu
+            if (password !== confirmPassword) {
+                showError('Mật khẩu xác nhận không khớp!');
+                return;
+            }
+
+            if (password.length < 6) {
+                showError('Mật khẩu phải có ít nhất 6 ký tự!');
+                return;
+            }
+
+            // Tạo request body
+            const requestBody = {
+                username: username,
+                email: email,
+                password: password,
+                full_name: fullname,
+                avatar: avatar || "https://example.com/avatar.jpg"
+            };
+
+            try {
+                setLoading(true);
+
+                // Gọi API đăng ký
+                const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Lưu thông tin user vào localStorage
+                    localStorage.setItem('user', JSON.stringify(data.data));
+                    localStorage.setItem('token', data.data.token);
+                    localStorage.setItem('userId', data.data.id);
+                    localStorage.setItem('username', data.data.username);
+
+                    // Hiển thị thông báo thành công
+                    showSuccess(data.message || 'Đăng ký thành công! Đang chuyển đến trang chủ...');
+
+                    // Chờ 1.5 giây rồi chuyển sang trang chủ
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 1500);
+                } else {
+                    // Hiển thị lỗi từ API
+                    showError(data.message || 'Đăng ký thất bại!');
+                }
+            } catch (error) {
+                console.error('Lỗi kết nối:', error);
+                showError('Không thể kết nối đến máy chủ. Vui lòng thử lại!');
+            } finally {
+                setLoading(false);
+            }
+        });
+
+        // Kiểm tra nếu đã đăng nhập
+        window.addEventListener('load', function () {
+            const token = localStorage.getItem('token');
+            if (token) {
+                // Đã đăng nhập, redirect về trang chủ
+                window.location.href = 'index.html';
+            }
+        });
+    </script>
+</body>
+
+</html>
